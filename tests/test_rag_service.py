@@ -19,19 +19,17 @@ from __future__ import annotations
 
 import asyncio
 import json
-from unittest.mock import AsyncMock, MagicMock, call, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
 from fastapi.testclient import TestClient
 
 from app.services.memory import MAX_MESSAGES, ChatMemory, Message
 from app.services.rag import (
-    RagAnswer,
-    RagService,
     _NO_CONTEXT_ANSWER,
     _RELEVANCE_THRESHOLD,
+    RagAnswer,
+    RagService,
 )
-
 
 # ===========================================================================
 # Helpers
@@ -316,7 +314,6 @@ class TestChatEndpoint:
         self, chat_client: TestClient, mock_rag_service: MagicMock
     ) -> None:
         """The endpoint answer must match what RagService.answer() returns."""
-        from app.services.rag import RagAnswer
 
         mock_rag_service.answer = AsyncMock(
             return_value=RagAnswer(answer="Custom answer.", sources=["x.pdf"])

@@ -183,7 +183,7 @@ class RagService:
                 logger.debug(
                     "Session '%s': rewritten query → '%s'", session_id, search_query
                 )
-            except Exception as exc:  # noqa: BLE001 — propagate HTTPExceptions
+            except Exception as exc:
                 logger.warning(
                     "Session '%s': query rewrite failed (%s); "
                     "falling back to original message.",

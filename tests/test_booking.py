@@ -11,18 +11,16 @@ from __future__ import annotations
 
 import asyncio
 from datetime import date, datetime, time, timedelta, timezone
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.core.database import get_db
 from app.main import app
 from app.models.booking import Booking
 from app.repositories.booking_repository import BookingRepository
 from app.services.booking import BookingProcessResult, BookingService, _parse_llm_json
-from app.services.memory import ChatMemory
 
 
 class FakeRedis:
@@ -138,7 +136,7 @@ class TestBookingServiceUnit:
         )
         svc2 = self._create_service(fake_redis, turn2_json)
         res2 = asyncio.run(
-            svc2.handle_message("sess_multi", f"Tomorrow at 2pm", booking_repo)
+            svc2.handle_message("sess_multi", "Tomorrow at 2pm", booking_repo)
         )
 
         assert res2.booking_id is not None

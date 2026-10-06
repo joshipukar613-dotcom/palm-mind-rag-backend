@@ -13,12 +13,11 @@ from __future__ import annotations
 
 import json
 import logging
-import re
 from datetime import date, datetime, time, timezone
-from typing import Any, NamedTuple
+from typing import Any, NamedTuple, cast
 
-from pydantic import EmailStr, TypeAdapter
 import redis as redis_lib
+from pydantic import EmailStr, TypeAdapter, ValidationError
 
 from app.core.config import get_settings
 from app.models.booking import Booking
@@ -138,13 +137,13 @@ class BookingService:
     def get_state(self, session_id: str) -> dict[str, str]:
         """Return the current partial booking state dictionary for *session_id*."""
         key = _booking_key(session_id)
-        raw = self._redis.get(key)
+        raw = cast("str | bytes | None", self._redis.get(key))
         if not raw:
             return {}
         try:
             data = json.loads(raw)
             return data if isinstance(data, dict) else {}
-        except Exception:
+        except (json.JSONDecodeError, TypeError):
             return {}
 
     def save_state(self, session_id: str, state: dict[str, str]) -> None:
@@ -222,7 +221,7 @@ class BookingService:
             try:
                 _EMAIL_ADAPTER.validate_python(email_raw)
                 updated["email"] = email_raw
-            except Exception:
+            except ValidationError:
                 return updated, "Please provide a valid email address (e.g. name@example.com)."
 
         # 3. Date validation

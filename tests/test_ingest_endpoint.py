@@ -18,7 +18,6 @@ from __future__ import annotations
 import io
 from unittest.mock import MagicMock, patch
 
-import pytest
 from fastapi.testclient import TestClient
 
 # ---------------------------------------------------------------------------

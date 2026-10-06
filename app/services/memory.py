@@ -57,7 +57,7 @@ class ChatMemory:
         self._ttl: int = ttl_seconds if ttl_seconds is not None else settings.chat_ttl_seconds
         try:
             self._redis = redis_lib.from_url(url, decode_responses=True)
-        except Exception as exc:  # noqa: BLE001
+        except Exception as exc:
             logger.error("Could not create Redis client: %s", exc)
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

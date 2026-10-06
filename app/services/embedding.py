@@ -27,7 +27,9 @@ class EmbeddingService:
     def __init__(self, model_name: str) -> None:
         logger.info("Loading embedding model '%s' …", model_name)
         try:
-            from sentence_transformers import SentenceTransformer  # type: ignore[import]
+            from sentence_transformers import (
+                SentenceTransformer,  # type: ignore[import]
+            )
         except ImportError as exc:  # pragma: no cover
             raise RuntimeError(
                 "sentence-transformers is not installed; run `pip install sentence-transformers`"
