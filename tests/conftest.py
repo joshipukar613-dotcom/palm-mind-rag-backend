@@ -113,7 +113,10 @@ def mock_redis() -> Generator[MagicMock, None, None]:
     mock_client.set.return_value = True
     mock_client.delete.return_value = 1
 
-    with patch("app.services.memory.redis_lib.from_url", return_value=mock_client):
+    with (
+        patch("app.services.memory.redis_lib.from_url", return_value=mock_client),
+        patch("app.services.booking.redis_lib.from_url", return_value=mock_client),
+    ):
         yield mock_client
 
 
@@ -243,10 +246,35 @@ def mock_rag_service() -> Generator[MagicMock, None, None]:
 
 
 @pytest.fixture()
-def chat_client(mock_rag_service: MagicMock) -> TestClient:
-    """TestClient for chat endpoints with the entire RAG pipeline mocked.
+def mock_booking_service() -> Generator[MagicMock, None, None]:
+    """Replace ``get_booking_service`` with a controllable MagicMock.
 
-    No Redis, no LLM, no Qdrant, no sentence-transformers.
+    By default delegates all messages to RAG so pure RAG chat tests pass.
+    """
+    from app.services.booking import BookingProcessResult, get_booking_service
+
+    mock_svc = MagicMock()
+    mock_svc.handle_message = AsyncMock(
+        return_value=BookingProcessResult(answer="", delegate_to_rag=True)
+    )
+    mock_svc.clear_state.return_value = False
+
+    app.dependency_overrides[get_booking_service] = lambda: mock_svc
+    try:
+        yield mock_svc
+    finally:
+        app.dependency_overrides.pop(get_booking_service, None)
+
+
+@pytest.fixture()
+def chat_client(
+    mock_rag_service: MagicMock,
+    mock_booking_service: MagicMock,
+    tmp_db_session: sessionmaker,
+) -> TestClient:
+    """TestClient for chat endpoints with the entire RAG pipeline and DB mocked.
+
+    No Redis, no LLM, no Qdrant, no sentence-transformers, isolated temp SQLite.
 
     Returns
     -------

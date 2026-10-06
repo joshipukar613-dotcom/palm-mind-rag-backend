@@ -1,6 +1,6 @@
-from datetime import date, time
+from datetime import date, datetime, time
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class ChatRequest(BaseModel):
@@ -20,3 +20,16 @@ class BookingDetails(BaseModel):
     email: EmailStr
     booking_date: date
     booking_time: time
+
+
+class BookingResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    session_id: str
+    name: str
+    email: str
+    booking_date: date
+    booking_time: time
+    created_at: datetime
+
