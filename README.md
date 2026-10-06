@@ -189,7 +189,6 @@ Defined in `.env` (see `.env.example`):
 | `LLM_MODEL` | `openai/gpt-oss-20b` | Chat model name |
 | `CHUNK_SIZE` | `800` | Target chunk size in characters |
 | `CHUNK_OVERLAP` | `100` | Overlap between chunks (fixed strategy) |
-| `RETRIEVAL_MIN_SCORE` | `0.20` | Minimum cosine score for a chunk to be used as context |
 
 Any OpenAI-compatible provider works by changing `LLM_BASE_URL`, `LLM_MODEL` and `LLM_API_KEY`.
 
@@ -303,7 +302,7 @@ No `RetrievalQAChain` or any LangChain chain is used. Each message goes through 
 1. **Load history** for the `session_id` from Redis.
 2. **Rewrite follow-ups.** If there is history, the LLM rewrites the message into a standalone search query using prior questions and answers, so "How many moons does it have?" becomes "How many moons does Jupiter have?".
 3. **Embed** the standalone query.
-4. **Retrieve** the top-k chunks from Qdrant (default k = 4) and drop hits below `RETRIEVAL_MIN_SCORE`.
+4. **Retrieve** the top-k chunks from Qdrant (default k = 4) and drop hits below a cosine-similarity relevance threshold of 0.30 (the `_RELEVANCE_THRESHOLD` constant in `app/services/rag.py`).
 5. **No-context fallback.** If nothing relevant is found, the API says so instead of letting the model guess.
 6. **Generate.** A prompt is built from the retrieved context, history and question, and sent to the LLM, which is instructed to answer only from the context.
 7. **Persist** the user message and answer to Redis memory, and return the answer with de-duplicated source filenames.
@@ -425,7 +424,7 @@ Tests are fully isolated: they use a temporary SQLite database and mock Qdrant, 
 - **Qdrant over alternatives.** It runs locally with a single Docker image, has a clear Python client, and offers a dashboard at `http://localhost:6333/dashboard` for inspecting vectors.
 - **Local embeddings.** `all-MiniLM-L6-v2` needs no API key or billing, and its 384-dimension vectors are small and fast.
 - **Query rewriting for follow-ups.** Retrieval works on a standalone question, not a raw pronoun-filled follow-up.
-- **Relevance threshold.** Low-similarity chunks are discarded so the model says "I couldn't find that" instead of hallucinating. The threshold is configurable.
+- **Relevance threshold.** Low-similarity chunks are discarded so the model says "I couldn't find that" instead of hallucinating. The threshold (0.30) is a named constant in `app/services/rag.py`, easy to tune.
 - **Redis for conversational state.** Chat history and partial bookings are short-lived data that benefits from fast access and TTL expiry.
 - **SQL for durable data.** Document metadata and confirmed bookings are stored in SQLite through SQLAlchemy. Switching to PostgreSQL only requires changing `DATABASE_URL`.
 - **Layered architecture.** Routers, services, repositories and schemas are separate, with dependency injection, full type hints and logging throughout.
